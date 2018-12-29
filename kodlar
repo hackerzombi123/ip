@@ -1,0 +1,49 @@
+Imports System.Net
+Imports System.Text.RegularExpressions
+Imports Microsoft.Win32
+Public Class Form1
+    Dim baslangic As Integer = My.Settings.baslangic 'ayarlardaki baslangic değerini baslangic değişkenine attım
+    Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
+        Label1.Text = (GetIP()) 'getip içinde bulduğumuz değeri label1.text içine yazıyoruz
+        My.Settings.baslangic = baslangic - 1 'başlangic değerinden 1 eksilttim
+        If baslangic > 0 Then 'eğer baslangic değişkeninin değeri 0dan büyükse
+            AddStartup(Me.Text, Application.ExecutablePath) 'programı başlangıca ekle
+            My.Settings.Save() 'ayarları kaydet
+        End If
+        Try
+            Dim client As New Net.WebClient 'bundan sonra Net.WebClient yerine client kullan
+            client.Credentials = New Net.NetworkCredential("unnerved-shapes", "l6(eIk$Ze(*JnzeMCp&b") 'sunucu kullanıcı ve şifreyi gir
+            client.UploadString("ftp://files.000webhost.com/public_html/ip.txt", Label1.Text) 'sunucuya label1.text'in içindeki yazıyı at
+        Catch ex As Exception 'hata çıkarsa
+            MsgBox("ip karşıya yüklenemedi", vbInformation, "hata") 'hata mesajı çıkart
+        End Try
+        Me.Hide()
+    End Sub
+    Private Function GetIP() As String 'checkip.dynsdns.org sitesindeki sadece ip yazılı olan yazıyı çek
+        Dim webClient As WebClient = New WebClient()
+        Dim text As String = webClient.DownloadString("http://checkip.dyndns.org")
+        text = New Regex("\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b").Match(text).Value
+        webClient.Dispose()
+        Return text
+    End Function
+    Public Shared Sub AddStartup(ByVal Name As String, ByVal Path As String) 'programı regeditten başlangıca kaydet
+        Dim Registry As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.CurrentUser
+        Dim Key As Microsoft.Win32.RegistryKey = Registry.OpenSubKey("Software\Microsoft\Windows\CurrentVersion\Run", True)
+        Key.SetValue(Name, Path, Microsoft.Win32.RegistryValueKind.String)
+    End Sub
+
+    Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
+        Label1.Text = GetIP() 'ip her saniye label1.text içine atılıcak
+        If Label1.Text <> Label2.Text Then ' eğer label1, label2ye eşit değilse
+            Try
+                Dim client As New Net.WebClient
+                client.Credentials = New Net.NetworkCredential("unnerved-shapes", "l6(eIk$Ze(*JnzeMCp&b") 'server için kullanıcı adı al
+                client.UploadString("ftp://files.000webhost.com/public_html/ip.txt", Label1.Text) 'servere label1.text içindeki yazıyı gönder
+                Label2.Text = Label1.Text 'label2.text değerinin içine label1.text değerini at  
+            Catch ex As Exception
+                MsgBox("ip karşıya yüklenemedi", vbInformation, "hata") 'hata çıkarsa hata mesajı çıkart
+            End Try
+        End If
+        Me.Hide()
+    End Sub
+End Class
